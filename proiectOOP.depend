@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1615273266 source:f:\code\proiectoop\main.cpp
+	<iostream>
+	<cstring>
+
+1615274523 source:f:\code\proiectoop\classes.cpp
+
