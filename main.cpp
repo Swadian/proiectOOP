@@ -5,18 +5,18 @@ using namespace std;
 
 
 /*
-int - note
+int - nota
 bool - medie
 char - elev
-char* -
-float -
-int* -
+char* - elev
+float -elev
+int* - clasa
 float* -
 double - medie
 const - elev
 static - elev
 string - teacher
-string* - elev
+string* -
 
 
 */
@@ -28,7 +28,7 @@ int value;
 string subject;
 
 public:
-note(int value, string subject)
+nota(int value, string subject)
 {
     this->value=value;
     this->subject=subject;
@@ -45,7 +45,8 @@ void setSubject(string subject)
 
 };
 
-class medie : public nota{
+class medie : public nota
+{
 double value;
 bool passing;
 public:
@@ -65,8 +66,9 @@ public:
 
 class clasa;
 class elev;
+
 class teacher{
-    protected:
+protected:
 string subject;
 clasa* clase;
 
@@ -75,9 +77,9 @@ clasa* clase;
 
 class clasa{
 teacher* profesori;
-string* subjects;
 elev* elevi;
-
+teacher diriginte;
+int* sali;
 };
 
 
@@ -85,10 +87,12 @@ class elev{
 
 private:
     char* nume;
+    string prenume;
+
     char init_tata;
-    string* materii;
     const int IDOrd;
     medie* medii;
+    float medieGenerala;
 
 
 
@@ -101,6 +105,5 @@ public:
 
 int main()
 {
-    cout << "Hello world!" << endl;
     return 0;
 }
