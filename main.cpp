@@ -46,10 +46,6 @@ void setSubject(string subject)
     {this->subject=subject;}
 string getSubject()
 { return this->subject;}
-
-
-
-
 };
 
 class medie : public nota
@@ -85,10 +81,9 @@ medie(nota *note, int nr)
 
 
 };
-class elev;
 
 class teacher{
-    protected:
+    private:
 char* nume;
 string *prenume;
 string subject;
@@ -118,6 +113,33 @@ string subject;
             if(this->prenume!=NULL)
                 delete[] this->prenume;
         }
+        teacher& operator=(const teacher& t)
+        {
+            if(this!=&t)
+            {
+                if (this->nume!=NULL)
+                    delete[] this->nume;
+                if(this->prenume!=NULL);
+                    delete[] this->prenume;
+                this->nume=new char[strlen(t.nume)+1];
+                strcpy(this->nume,t.nume);
+                this->prenume=new string[2];
+                this->prenume[0]=t.prenume[0];
+                this->prenume[1]=t.prenume[1];
+                this->subject=t.subject;
+            }
+            return *this;
+        }
+        teacher(const teacher& t)
+        {
+                this->nume=new char[strlen(t.nume)+1];
+                strcpy(this->nume,t.nume);
+                this->prenume=new string[2];
+                this->prenume[0]=t.prenume[0];
+                this->prenume[1]=t.prenume[1];
+                this->subject=t.subject;
+        }
+
 };
 
 
@@ -130,26 +152,68 @@ private:
     char init_tata;
     const int IDOrd;
     medie* medii;
+    nota* note;
+    int noteCount;
     int materii;
     float medieGenerala;
 public:
 
     static int contorID;
-    char* getNume()
+    elev& operator=(const elev& e)
     {
+        if(this!=&e)
+        {
+            if(this->nume!=NULL)
+                delete[] this->nume;
+            if(this->medii!=NULL)
+                delete[] this->medii;
+            this->nume=new char[strlen(e.nume)+1];
+            strcpy(this->nume,e.nume);
+            this->prenume=e.prenume;
+            this->init_tata=e.init_tata;
+            this->materii=e.materii;
+            this->medii=new medie[e.materii];
+            for(int i=0;i<e.materii;i++)
+                this->medii[i]=e.medii[i];
+            this->medieGenerala=e.medieGenerala;
+            this->noteCount=e.noteCount;
+            for(int i=0;i<e.noteCount;i++)
+                this->note[i]=e.note[i];
 
-        return this->nume;
-
+        }
+      return  *this;
     }
+    elev( const elev& e):IDOrd(e.IDOrd)
+    {
+            if(this->nume!=NULL)
+                delete[] this->nume;
+            if(this->medii!=NULL)
+                delete[] this->medii;
+            if(this->note!=NULL)
+                delete[] this->note;
+            this->nume=new char[strlen(e.nume)+1];
+            strcpy(this->nume,e.nume);
+            this->prenume=e.prenume;
+            this->init_tata=e.init_tata;
+            this->materii=e.materii;
+            this->medii=new medie[e.materii];
+            for(int i=0;i<e.materii;i++)
+                this->medii[i]=e.medii[i];
+            this->medieGenerala=e.medieGenerala;
+            this->noteCount=e.noteCount;
+            for(int i=0;i<e.noteCount;i++)
+                this->note[i]=e.note[i];
+    }
+
+    char* getNume()
+    {return this->nume;}
 
     void setNume(char* nume)
     {
-
         if(this->nume!=NULL)
             delete[] this->nume;
         this->nume=new char[strlen(nume)+1];
         strcpy(this->nume,nume);
-
     }
 
     elev():IDOrd(contorID++)
@@ -161,9 +225,11 @@ public:
         this->medii=NULL;
         this->medieGenerala=0;
         this->materii=0;
+        this->note=NULL;
+        this->noteCount=0;
     }
     elev(char* nume,string prenume, char init_tata, int materii,
-         medie* medii, float medieGenerala):IDOrd(contorID++)
+         medie* medii, float medieGenerala, nota *note, int noteCount):IDOrd(contorID++)
          {
              this->nume=new char[strlen(nume)+1];
              strcpy(this->nume,nume);
@@ -174,6 +240,10 @@ public:
              for(int i=0;i<materii;i++)
                 this->medii[i]=medii[i];
              this->medieGenerala=medieGenerala;
+             this->note=new nota[noteCount];
+             this->noteCount=noteCount;
+             for(int i=0;i<noteCount;i++)
+                this->note[i]=note[i];
          }
 
          ~elev()
@@ -195,8 +265,11 @@ int nrElevi;
 teacher diriginte;
 int* sali;
 int nrSali;
+float *medii;
 public:
-    clasa(teacher* profesori,int nrProfesori, elev *elevi,int nrElevi, teacher diriginte, int nrSali, int* sali)
+    clasa(teacher* profesori,int nrProfesori,
+          elev *elevi,int nrElevi, teacher diriginte,
+          int nrSali, int* sali, float *medii)
     {
         this->nrProfesori=nrProfesori;
         this->profesori=new teacher[nrProfesori];
@@ -209,6 +282,9 @@ public:
         this->diriginte=diriginte;
         this->sali=new int[nrSali];
         this->nrSali=nrSali;
+        this->medii=new float[nrElevi];
+        for(int i=0;i<nrElevi;i++)
+            this->medii[i]=medii[i];
     }
 };
 
