@@ -44,6 +44,9 @@ int getValue()
     {return this->value;}
 void setSubject(string subject)
     {this->subject=subject;}
+string getSubject()
+{ return this->subject;}
+
 
 
 
@@ -63,12 +66,25 @@ public:
     void setPassing(bool passing)
     {this->passing=passing;}
 
-
+medie()
+{
+    this->value=0;
+    this->passing=false;
+    this->subject="NONE";
+}
+medie(nota *note, int nr)
+{
+    double v=0;
+    for (int i=0;i<nr;i++)
+        v+=note[i].getValue();
+    this->subject=note[0].getSubject();
+    this->value=v/nr;
+    if(this->value>=5.0) this->passing=true;
+    else this->passing=false;
+}
 
 
 };
-
-class clasa;
 class elev;
 
 class teacher{
@@ -76,8 +92,6 @@ class teacher{
 char* nume;
 string *prenume;
 string subject;
-clasa* clase;
-int nClase;
     public:
         teacher()
         {
@@ -86,26 +100,26 @@ int nClase;
             this->prenume=new string[2];
             this->prenume[0]="anonim";
             this->prenume[1]="";
-            this->subject="none";
-            this->nClase=0;
-            this->clase=new clasa[1];
-            this->clasa[0]=clasa();
+            this->subject="NONE";
+        }
+        teacher(char *nume,string *prenume,string subject)
+        {
+            this->nume=new char[strlen(nume)+1];
+            strcpy(this->nume,nume);
+            this->prenume=new string[2];
+            this->prenume[0]=prenume[0];
+            this->prenume[1]=prenume[1];
+            this->subject=subject;
+        }
+        ~teacher()
+        {
+            if(this->nume!=NULL)
+                delete[] this->nume;
+            if(this->prenume!=NULL)
+                delete[] this->prenume;
         }
 };
 
-
-class clasa{
-private:
-teacher* profesori;
-elev* elevi;
-teacher diriginte;
-int* sali;
-public:
-    clasa()
-    {
-
-    }
-};
 
 
 class elev{
@@ -119,6 +133,7 @@ private:
     int materii;
     float medieGenerala;
 public:
+
     static int contorID;
     char* getNume()
     {
@@ -161,8 +176,41 @@ public:
              this->medieGenerala=medieGenerala;
          }
 
+         ~elev()
+         {
+             if(this->nume!=NULL)
+                delete[] this->nume;
+             if (this->medii!=NULL)
+                delete[] this->medii;
+         }
 };
 int elev::contorID=1000;
+
+class clasa{
+private:
+teacher* profesori;
+int nrProfesori;
+elev* elevi;
+int nrElevi;
+teacher diriginte;
+int* sali;
+int nrSali;
+public:
+    clasa(teacher* profesori,int nrProfesori, elev *elevi,int nrElevi, teacher diriginte, int nrSali, int* sali)
+    {
+        this->nrProfesori=nrProfesori;
+        this->profesori=new teacher[nrProfesori];
+        for(int i=0;i<nrProfesori;i++)
+            this->profesori[i]=profesori[i];
+        this->nrElevi=nrElevi;
+        this->elevi=new elev[nrElevi];
+        for(int i=0;i<nrElevi;i++)
+            this->elevi[i]=elevi[i];
+        this->diriginte=diriginte;
+        this->sali=new int[nrSali];
+        this->nrSali=nrSali;
+    }
+};
 
 int main()
 {
