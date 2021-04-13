@@ -1,7 +1,8 @@
 # depslib dependency file v1.0
-1615985300 source:f:\code\proiectoop\main.cpp
+1618345096 source:f:\code\proiectoop\main.cpp
 	<iostream>
 	<cstring>
+	<vector>
 
 1615274523 source:f:\code\proiectoop\classes.cpp
 
