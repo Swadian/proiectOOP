@@ -25,9 +25,9 @@ nota()
     this->subject="";
 }
 void setValue(int value){this->value=value;}
-int getValue(){return this->value;}
+ int getValue(){return this->value;}
 void setSubject(string subject){this->subject=subject;}
-string getSubject(){return this->subject;}
+ string getSubject(){return this->subject;}
 const nota& operator++();
 const nota operator++(int);
 nota& operator=(const nota& n)
@@ -94,15 +94,13 @@ public:
     friend istream& operator>>(istream& in, medie& m);
     friend ostream& operator<<(ostream& out, const medie& m);
     void setValue(double value){this->value=value;}
-    double getValue(){return this->value;}
-    bool isPassing(){return this->passing;}
+    const double getValue(){return this->value;}
+    const bool isPassing(){return this->passing;}
     void setPassing(bool passing){this->passing=passing;}
 
-medie()
+medie():nota()
 {
-    this->value=0;
     this->passing=false;
-    this->subject="NONE";
 }
 medie(nota *note, int nr)
 {
@@ -212,7 +210,8 @@ string subject;
                 this->prenume[1]=t.prenume[1];
                 this->subject=t.subject;
         }
-string getSubject(){return this->subject;}
+ string getSubject(){return this->subject;}
+ char* getNume(){return this->nume;}
 friend istream& operator>>(istream& in, teacher& t);
 friend ostream& operator<<(ostream& out, const teacher& t);
 };
@@ -348,12 +347,13 @@ public:
         this->nume=new char[strlen(nume)+1];
         strcpy(this->nume,nume);
     }
-    float getMedieGenerala(){return this->medieGenerala;}
+     float getMedieGenerala(){return this->medieGenerala;}
     void setMedieGenerala(float m){this->medieGenerala=m;}
     void setInitTata(char i){this->init_tata=i;}
     char getInitTata(){return this->init_tata;}
     int getMaterii(){return this->materii;}
     void setMaterii(int m){this->materii=m;}
+    string getPrenume(){return this->prenume;}
     nota* getNote(){return this->note;}
     void setNote(nota* n, int k)
     {
@@ -523,6 +523,7 @@ public:
     elev* getElevi(){return this->elevi;}
     int getNrElevi(){return this->nrElevi;}
     int getNrProfesori(){return this->nrProfesori;}
+    teacher getHomeroom(){return this->diriginte;}
     elev operator[](int index);
     friend istream& operator>>(istream& in, clasa& c);
     friend ostream& operator<<(ostream& out, const clasa& c);
@@ -578,7 +579,10 @@ ostream& operator<<(ostream& out,const clasa& c)
         out<<c.sali[i]<<' ';
     return out;
 }
+
 //privileges and database operations
+
+
 class privilege{
 protected:
     int selectedClass=0;
@@ -590,6 +594,8 @@ virtual void selectClass(int i){this->selectedClass=i;}
 virtual void printClass(vector<clasa> &clase)=0;
 
 };
+
+
 class adminPrivilege:public privilege{
 public:
 virtual void checkStudent(elev &e)
@@ -621,20 +627,37 @@ public:
         {this->student=&e;}
 virtual void checkStudent(elev &e)
 {
-    cout<<e.getNume()<<'\n';
+    if(&e==student)
+    {
+    cout<<e.getNume()<<' '<<e.getPrenume()<<'\n';
     cout<<e.getMedieGenerala()<<'\n';
     for(int i=0;i<e.getNoteCount();i++)
         cout<<e.getNote()[i];
     for(int i=0;i<e.getMaterii();i++)
         cout<<e.getMedii()[i];
+    }
+    else cout<<e.getNume()<<' '<<e.getPrenume();
+}
+
+
+virtual void printClass(vector<clasa> &clase)
+{
+    clasa *c=&clase[this->selectedClass];
+    for(int i=0;i<c->getNrElevi();i++)
+        cout<<c->getElevi()[i].getNume()<<' ';
 }
 
 };
+
+
 class teacherPrivilege:public privilege{
+    protected:
 string subject;
+string nume;
 public:
-teacherPrivilege(teacher t)
+teacherPrivilege(teacher &t)
 {
+    this->nume=t.getNume();
     this->subject=t.getSubject();
 }
     virtual void checkStudent(elev &e)
@@ -653,24 +676,65 @@ virtual void printClass(vector<clasa> &clase)
 {
     clasa *c=&clase[this->selectedClass];
     for(int i=0;i<c->getNrElevi();i++)
-        cout<<c->getElevi()[i];
+        checkStudent(c->getElevi()[i]);
 }
-
+teacherPrivilege(const teacherPrivilege& tp)
+{
+    this->subject=tp.subject;
+    this->selectedClass=tp.selectedClass;
+}
+teacherPrivilege& operator=(const teacherPrivilege& tp)
+{
+    this->subject=tp.subject;
+    this->selectedClass=tp.selectedClass;
+    return *this;
+}
+virtual void addGrade(elev &e)
+{
+        nota* aux=new nota[e.getNoteCount()+1];
+    for(int i=0;i<e.getNoteCount();i++)
+        aux[i]=e.getNote()[i];
+    int g;
+    cout<<"Nota: ";cin>>g;
+    nota *n=new nota(g,this->subject);
+    aux[e.getNoteCount()]=*n;
+    e.setNote(aux,e.getNoteCount()+1);
+    delete[] aux;
+}
 };
+
+
 class homeroomPrivilege:public teacherPrivilege{
+public:
+homeroomPrivilege(teacher &t):teacherPrivilege(t){};
 virtual void checkStudent(const elev &e)
 {
-    cout<<e;
+        cout<<e;
 }
 
+virtual void printClass(vector<clasa> &clase)
+{
+    clasa *c=&clase[this->selectedClass];
+    if(c->getHomeroom().getSubject()==this->subject)
+    for(int i=0;i<c->getNrElevi();i++)
+        cout<<c->getElevi()[i];
+}
+virtual void addGrade(elev &e)
+{
+        nota* aux=new nota[e.getNoteCount()+1];
+    for(int i=0;i<e.getNoteCount();i++)
+        aux[i]=e.getNote()[i];
+    cin>>aux[e.getNoteCount()];
+    e.setNote(aux,e.getNoteCount()+1);
+    delete[] aux;
+}
 
 };
 
-int main()
+
+privilege* login(privilege* level)
 {
-    vector<clasa> clase;
-    privilege* level;
-    cout<<"Login as:\n1.Admin\n2.teacher\n3.student\n";
+        cout<<"Login as:\n1.Admin\n2.teacher\n3.student\n";
     int i;
     cin>>i;
     switch(i){
@@ -688,9 +752,19 @@ case 1:
         }
     case 3:
     {
-     //   level=new studentPrivilege();
+        elev *s=new elev();
+        cin>>*s;
+        level=new studentPrivilege(*s);
         break;
     }
     }
+return level;
+}
+int main()
+{
+    vector<clasa> clase;
+    privilege* level;
+    level=login(level);
+
     return 0;
 }
