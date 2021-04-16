@@ -585,14 +585,16 @@ ostream& operator<<(ostream& out,const clasa& c)
 
 class privilege{
 protected:
-    int selectedClass=0;
+    int selectedClass;
 
 public:
     virtual void checkStudent(elev &e)=0;
 
 virtual void selectClass(int i){this->selectedClass=i;}
 virtual void printClass(vector<clasa> &clase)=0;
-
+privilege(const privilege &p){this->selectedClass=p.selectedClass;}
+privilege(){this->selectedClass=0;}
+int getSelectedClass(){return this->selectedClass;}
 };
 
 
@@ -620,6 +622,7 @@ void addStudent(vector<clasa> &clase)
     c->setElevi(aux,c->getNrElevi()+1);
 }
 };
+
 class studentPrivilege:public privilege{
 elev *student;
 public:
@@ -639,23 +642,33 @@ virtual void checkStudent(elev &e)
     else cout<<e.getNume()<<' '<<e.getPrenume();
 }
 
-
+studentPrivilege(const studentPrivilege &sp):privilege(sp)
+{
+    this->student=sp.student;
+    this->selectedClass=sp.selectedClass;
+}
 virtual void printClass(vector<clasa> &clase)
 {
     clasa *c=&clase[this->selectedClass];
     for(int i=0;i<c->getNrElevi();i++)
         cout<<c->getElevi()[i].getNume()<<' ';
 }
-
+studentPrivilege operator=(const studentPrivilege &sp)
+{
+    if(this !=&sp){
+    this->student=sp.student;
+    this->selectedClass=sp.selectedClass;
+    }
+    return *this;
+}
 };
 
-
 class teacherPrivilege:public privilege{
-    protected:
+protected:
 string subject;
 string nume;
 public:
-teacherPrivilege(teacher &t)
+teacherPrivilege(teacher &t):privilege()
 {
     this->nume=t.getNume();
     this->subject=t.getSubject();
@@ -678,15 +691,18 @@ virtual void printClass(vector<clasa> &clase)
     for(int i=0;i<c->getNrElevi();i++)
         checkStudent(c->getElevi()[i]);
 }
-teacherPrivilege(const teacherPrivilege& tp)
+teacherPrivilege(const teacherPrivilege& tp):privilege(tp)
 {
+    this->nume=tp.nume;
     this->subject=tp.subject;
     this->selectedClass=tp.selectedClass;
 }
 teacherPrivilege& operator=(const teacherPrivilege& tp)
 {
+    if(this != &tp){
+    this->nume=tp.nume;
     this->subject=tp.subject;
-    this->selectedClass=tp.selectedClass;
+    this->selectedClass=tp.selectedClass;}
     return *this;
 }
 virtual void addGrade(elev &e)
@@ -700,9 +716,9 @@ virtual void addGrade(elev &e)
     aux[e.getNoteCount()]=*n;
     e.setNote(aux,e.getNoteCount()+1);
     delete[] aux;
+    delete n;
 }
 };
-
 
 class homeroomPrivilege:public teacherPrivilege{
 public:
@@ -711,6 +727,9 @@ virtual void checkStudent(const elev &e)
 {
         cout<<e;
 }
+homeroomPrivilege(const homeroomPrivilege &hp):teacherPrivilege(hp){};
+
+
 
 virtual void printClass(vector<clasa> &clase)
 {
@@ -718,6 +737,7 @@ virtual void printClass(vector<clasa> &clase)
     if(c->getHomeroom().getSubject()==this->subject)
     for(int i=0;i<c->getNrElevi();i++)
         cout<<c->getElevi()[i];
+    else teacherPrivilege::printClass(clase);
 }
 virtual void addGrade(elev &e)
 {
@@ -763,8 +783,82 @@ return level;
 int main()
 {
     vector<clasa> clase;
-    privilege* level;
-    level=login(level);
+    privilege* level=login(level);
+    bool done=false;
+    int command,c;
+    while(!done)
+    {
+        cout<<"Clasa selectata: "<<level->getSelectedClass()<<endl;
+        cout<<"Comenzi:"<<endl;
+        cout<<"0.Exit"<<endl;
+        cout<<"1.Selecteaza o clasa"<<endl;
+        cout<<"2.Afiseaza clasa selectata"<<endl;
+        cout<<"3.Selecteaza un student"<<endl;
+        cout<<"4.Adauga nota (doar profesor)"<<endl;
+        cout<<"5.Schimba nivelul de privilegiu"<<endl;
+        if(typeid(*level)==typeid(adminPrivilege))
+        {
+            cout<<"10.Adauga clasa"<<endl;
+        }
+        cin>>command;
+        switch (command){
+    case 0:
+        {
+            done=true;
+            break;
+        }
+    case 1:
+        {
+            cout<<"Clasa (0-"<<clase.size()<<"): ";cin>>c;
+            level->selectClass(c);
+            break;
+        }
+    case 2:
+        {
+            level->printClass(clase);
+            break;
+        }
+    case 3:
+        {
+            for(int i=0;i<clase[level->getSelectedClass()].getNrElevi();i++)
+                cout<<clase[level->getSelectedClass()].getElevi()[i].getNume()<<endl;
+            cin>>c;
+            level->checkStudent(clase[level->getSelectedClass()].getElevi()[c]);
+        }
+    case 4:
+        {
+            if(typeid(*level)==typeid(teacherPrivilege))
+            {
+                cout<<"Elev: ";
+                for(int i=0;i<clase[level->getSelectedClass()].getNrElevi();i++)
+                    cout<<clase[level->getSelectedClass()].getElevi()[i].getNume()<<endl;
+            cin>>c;
 
+                dynamic_cast<teacherPrivilege*>(level)->addGrade(clase[level->getSelectedClass()].getElevi()[c]);
+            }
+            else if(typeid(*level)==typeid(homeroomPrivilege))
+            {
+                cout<<"Elev: ";
+                for(int i=0;i<clase[level->getSelectedClass()].getNrElevi();i++)
+                    cout<<clase[level->getSelectedClass()].getElevi()[i].getNume()<<endl;
+            cin>>c;
+
+                dynamic_cast<homeroomPrivilege*>(level)->addGrade(clase[level->getSelectedClass()].getElevi()[c]);
+
+            }
+            else cout<<"Privilegiu insuficient"<<endl;
+        }
+    case 5:
+        {
+            level=login(level);
+            break;
+        }
+    case 10:
+        {
+            dynamic_cast<adminPrivilege*>(level)->addClass(clase);
+            break;
+        }
+        }
+    }
     return 0;
 }
