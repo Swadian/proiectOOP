@@ -1,6 +1,8 @@
 #include <iostream>
 #include <cstring>
 #include <vector>
+#include <unordered_set>
+#include <fstream>
 using namespace std;
 
 
@@ -314,6 +316,19 @@ public:
         this->note=NULL;
         this->noteCount=0;
     }
+        elev(char* nume,string p,char i):IDOrd(contorID++)
+    {
+        this->nume=new char[strlen(nume)+1];
+        strcpy(this->nume,nume);
+        this->prenume=p;
+        this->init_tata=i;
+        this->medii=NULL;
+        this->medieGenerala=0;
+        this->materii=0;
+        this->note=NULL;
+        this->noteCount=0;
+    }
+
     elev(char* nume,string prenume, char init_tata, int materii,medie* medii, float medieGenerala, nota *note, int noteCount):IDOrd(contorID++)
          {
              this->nume=new char[strlen(nume)+1];
@@ -521,6 +536,7 @@ public:
             this->elevi[i]=e[i];
     }
     elev* getElevi(){return this->elevi;}
+    void setHomeroom(teacher t){this->diriginte=t;}
     int getNrElevi(){return this->nrElevi;}
     int getNrProfesori(){return this->nrProfesori;}
     teacher getHomeroom(){return this->diriginte;}
@@ -562,7 +578,7 @@ istream& operator>>(istream& in, clasa& c)
         delete[] c.sali;
       c.sali=new int[c.nrSali];
       for(int i=0;i<c.nrSali;i++)
-        in>>c.sali[i];
+        {cout<<"\nsala: ";in>>c.sali[i];}
       return in;
 }
 ostream& operator<<(ostream& out,const clasa& c)
@@ -597,6 +613,7 @@ privilege(){this->selectedClass=0;}
 int getSelectedClass(){return this->selectedClass;}
 };
 
+unordered_set<string> homeroom;//set cu diriginti, pentru functia de login
 
 class adminPrivilege:public privilege{
 public:
@@ -609,6 +626,7 @@ void addClass(vector<clasa> &clase)
     clasa *c=new clasa();
     cin>>*c;
     clase.push_back(*c);
+    homeroom.insert(string(c->getHomeroom().getNume()));
 }
 virtual void printClass(vector<clasa> &clase)
 {cout<<clase[this->selectedClass];}
@@ -621,6 +639,24 @@ void addStudent(vector<clasa> &clase)
     cin>>aux[c->getNrElevi()];
     c->setElevi(aux,c->getNrElevi()+1);
 }
+void addhomeroom(vector<clasa> &clase)
+{
+    string m,p[2];
+    char* n=new char[20];
+    cout<<"\nNume: ";cin>>n;
+    cout<<"\nPrenume: ";cin>>p[0]>>p[1];
+    homeroom.insert(string(n));
+    cout<<"\nMaterie: ";cin>>m;
+    clase[this->selectedClass].setHomeroom(teacher(n,p,m));
+    delete[] n;
+}
+void exp(vector<clasa> &clase)
+{
+    ofstream fout("clase.out");
+    for(int i=0;i<(int)clase.size();i++)
+        fout<<clase[i];
+}
+
 };
 
 class studentPrivilege:public privilege{
@@ -767,14 +803,27 @@ case 1:
         {
             teacher *t=new teacher();
             cin>>*t;
-            level=new teacherPrivilege(*t);
+            if(homeroom.find(string(t->getNume()))!=homeroom.end())
+               {
+                   level=new homeroomPrivilege(*t);
+               }
+               else level=new teacherPrivilege(*t);
+            delete t;
             break;
         }
     case 3:
     {
-        elev *s=new elev();
-        cin>>*s;
+        char* n=new char[20];
+        cout<<"\nNume: ";
+        cin>>n;
+        string p;
+        cout<<"\nPrenume: ";
+        cin>>p;
+        cout<<"\nInitiala tatalui: ";
+        char i;cin>>i;
+        elev *s=new elev(n,p,i);
         level=new studentPrivilege(*s);
+        delete s;delete[] n;
         break;
     }
     }
@@ -788,17 +837,19 @@ int main()
     int command,c;
     while(!done)
     {
-        cout<<"Clasa selectata: "<<level->getSelectedClass()<<endl;
+        cout<<"\nClasa selectata: "<<level->getSelectedClass()<<endl;
         cout<<"Comenzi:"<<endl;
         cout<<"0.Exit"<<endl;
         cout<<"1.Selecteaza o clasa"<<endl;
         cout<<"2.Afiseaza clasa selectata"<<endl;
-        cout<<"3.Selecteaza un student"<<endl;
+        cout<<"3.Afiseaza datele unui student"<<endl;
         cout<<"4.Adauga nota (doar profesor)"<<endl;
         cout<<"5.Schimba nivelul de privilegiu"<<endl;
         if(typeid(*level)==typeid(adminPrivilege))
         {
             cout<<"10.Adauga clasa"<<endl;
+            cout<<"11.Schimba diriginte"<<endl;
+            cout<<"12.Exporteaza clasele"<<endl;
         }
         cin>>command;
         switch (command){
@@ -809,7 +860,7 @@ int main()
         }
     case 1:
         {
-            cout<<"Clasa (0-"<<clase.size()<<"): ";cin>>c;
+            cout<<"Clasa (0-"<<(int)clase.size()-1<<"): ";cin>>c;
             level->selectClass(c);
             break;
         }
@@ -855,8 +906,25 @@ int main()
         }
     case 10:
         {
-            dynamic_cast<adminPrivilege*>(level)->addClass(clase);
+            if(typeid(*level)==typeid(adminPrivilege))
+                dynamic_cast<adminPrivilege*>(level)->addClass(clase);
+            else cout<<"How did you get here?"<<endl;
             break;
+        }
+    case 11:
+        {
+            if(typeid(*level)==typeid(adminPrivilege))
+                dynamic_cast<adminPrivilege*>(level)->addhomeroom(clase);
+            else cout<<"How did you get here?"<<endl;
+            break;
+        }
+    case 12:
+        {
+            if(typeid(*level)==typeid(adminPrivilege))
+                dynamic_cast<adminPrivilege*>(level)->exp(clase);
+            else cout<<"How did you get here?"<<endl;
+            break;
+
         }
         }
     }
