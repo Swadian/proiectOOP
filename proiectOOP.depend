@@ -1,8 +1,11 @@
 # depslib dependency file v1.0
-1618419542 source:f:\code\proiectoop\main.cpp
+1620657052 source:f:\code\proiectoop\main.cpp
 	<iostream>
 	<cstring>
 	<vector>
+	<unordered_set>
+	<fstream>
+	<typeinfo>
 
 1615274523 source:f:\code\proiectoop\classes.cpp
 

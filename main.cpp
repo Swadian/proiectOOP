@@ -3,7 +3,7 @@
 #include <vector>
 #include <unordered_set>
 #include <fstream>
-
+#include <typeinfo>
 using namespace std;
 
 
@@ -458,13 +458,13 @@ istream &operator>>(istream &in, elev &e) {
 }
 
 ostream &operator<<(ostream &out, const elev &e) {
-    out << e.IDOrd << '\n';
+    out << e.IDOrd;
     out << "\nNume: " << e.nume << "\nPrenume: " << e.prenume << "\nInitiala Tatalui: " << e.init_tata << '.';
     out << "\nMedii: ";
     for (int i = 0; i < e.materii; i++) out << e.medii[i] << ' ';
     out << "\nNote: ";
     for (int i = 0; i < e.noteCount; i++) out << e.note[i] << ' ';
-    out << "\nMedia generala: " << e.medieGenerala;
+    out << "\nMedia generala: " << e.medieGenerala<<'\n';
     return out;
 }
 
@@ -503,6 +503,8 @@ public:
         this->diriginte = diriginte;
         this->sali = new int[nrSali];
         this->nrSali = nrSali;
+        for(int i=0;i<nrSali;i++)
+            this->sali[i]=sali[i];
     }
 
     clasa(const clasa &c) {
@@ -517,6 +519,8 @@ public:
         this->diriginte = c.diriginte;
         this->sali = new int[c.nrSali];
         this->nrSali = c.nrSali;
+        for(int i=0;i<c.nrSali;i++)
+            this->sali[i]=c.sali[i];
     }
 
     clasa &operator=(const clasa &c) {
@@ -623,14 +627,14 @@ istream &operator>>(istream &in, clasa &c) {
 }
 
 ostream &operator<<(ostream &out, const clasa &c) {
-    out << "Diriginte: " << c.diriginte << '\n';
-    out << "Profesori:\n";
+    out << "\nDiriginte: " << c.diriginte << '\n';
+    out << "\nProfesori:\n";
     for (int i = 0; i < c.nrProfesori; i++)
         out << c.profesori[i];
-    out << "Elevi:\n";
+    out << "\nElevi:\n";
     for (int i = 0; i < c.nrElevi; i++)
         out << c.elevi[i];
-    out << "Sali:\n";
+    out << "\nSali:\n";
     for (int i = 0; i < c.nrSali; i++)
         out << c.sali[i] << ' ';
     return out;
@@ -702,6 +706,25 @@ public:
         for (int i = 0; i < (int) clase.size(); i++)
             fout << clase[i];
     }
+    void imp(vector<clasa> &clase)
+    {
+        cout<<"\nFilename: ";
+        string file;
+        clasa *c= new clasa();
+        bool read=true;
+        do{
+            read=true;
+            try{
+            cin>>file;
+            ifstream fin(file);
+            fin>>*c;
+            }
+            catch(...){read=false;}
+        }while(!read);
+        clase.push_back(*c);
+        for(int i=0;i<50;i++)cout<<'\n';
+        delete c;
+    }
 
 };
 
@@ -711,14 +734,15 @@ public:
     studentPrivilege(elev &e) { this->student = &e; }
 
     virtual void checkStudent(elev &e) {
-        if (&e == student) {
-            cout << e.getNume() << ' ' << e.getPrenume() << '\n';
-            cout << e.getMedieGenerala() << '\n';
+        if (string(e.getNume())==string(student->getNume())){
+            cout <<'\n'<< e.getNume() << ' ' << e.getPrenume() << '\n';
+            cout << "Medie generala: "<<e.getMedieGenerala() << '\n';
             for (int i = 0; i < e.getNoteCount(); i++)
-                cout << e.getNote()[i];
+                cout << e.getNote()[i]<<' ';
             for (int i = 0; i < e.getMaterii(); i++)
-                cout << e.getMedii()[i];
+                cout << e.getMedii()[i]<<' ';
         } else cout << e.getNume() << ' ' << e.getPrenume();
+        cout<<'\n';
     }
 
     studentPrivilege(const studentPrivilege &sp) : privilege(sp) {
@@ -729,7 +753,7 @@ public:
     virtual void printClass(vector<clasa> &clase) {
         clasa *c = &clase[this->selectedClass];
         for (int i = 0; i < c->getNrElevi(); i++)
-            cout << c->getElevi()[i].getNume() << ' ';
+            checkStudent(c->getElevi()[i] );
     }
 
     studentPrivilege operator=(const studentPrivilege &sp) {
@@ -885,7 +909,8 @@ int main() {
         if (typeid(*level) == typeid(adminPrivilege)) {
             cout << "10.Adauga clasa" << endl;
             cout << "11.Schimba diriginte" << endl;
-            cout << "12.Exporteaza clasele" << endl;
+            cout << "12.Exporta clasele" << endl;
+            cout << "13.Importa o clasa" << endl;
         }
         cin >> command;
         switch (command) {
@@ -908,6 +933,7 @@ int main() {
                     cout << i << " " << clase[level->getSelectedClass()].getElevi()[i].getNume() << endl;
                 cin >> c;
                 level->checkStudent(clase[level->getSelectedClass()].getElevi()[c]);
+                break;
             }
             case 4: {
                 if (typeid(*level) == typeid(teacherPrivilege)) {
@@ -926,6 +952,7 @@ int main() {
                     dynamic_cast<homeroomPrivilege *>(level)->addGrade(clase[level->getSelectedClass()].getElevi()[c]);
 
                 } else cout << "Privilegiu insuficient" << endl;
+                break;
             }
             case 5: {
                 level = login(level);
@@ -948,8 +975,13 @@ int main() {
                     dynamic_cast<adminPrivilege *>(level)->exp(clase);
                 else cout << "How did you get here?" << endl;
                 break;
-
             }
+            case 13:{
+                if (typeid(*level) == typeid(adminPrivilege))
+                    dynamic_cast<adminPrivilege *>(level)->imp(clase);
+                else cout << "How did you get here?" << endl;
+                break;
+}
         }
     }
     return 0;
